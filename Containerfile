@@ -50,6 +50,14 @@ RUN <<EOF
     mv lazyssh /usr/local/bin/
 EOF
 
+#Tea
+RUN <<EOF
+    DOWNLOAD_URL=$(curl -fsSL "https://gitea.com/api/v1/repos/gitea/tea/releases/latest" | jq -r '.assets[] | select(.name | endswith("linux-amd64")) | .browser_download_url')
+    curl -LJ "${DOWNLOAD_URL}" -o /usr/local/bin/tea
+    chmod +x /usr/local/bin/tea
+EOF
+
+
 RUN dnf install -y \
     maven \
     k9s \
