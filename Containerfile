@@ -50,6 +50,7 @@ RUN <<EOF
     mv lazyssh /usr/local/bin/
 EOF
 
+
 #Tea
 RUN <<EOF
     DOWNLOAD_URL=$(curl -fsSL "https://gitea.com/api/v1/repos/gitea/tea/releases/latest" | jq -r '.assets[] | select(.name | endswith("linux-amd64")) | .browser_download_url')
@@ -59,10 +60,10 @@ EOF
 
 #Boring
 RUN <<EOF
-    DOWNLOAD_URL=$(https://api.github.com/repos/alebeck/boring/releases/latest | jq -r '.assets[] | select(.name | endswith("linux-amd64.tar.gz")) | .browser_download_url')
+    DOWNLOAD_URL=$(curl -fsSL https://api.github.com/repos/alebeck/boring/releases/latest | jq -r '.assets[] | select(.name | endswith("linux-amd64.tar.gz")) | .browser_download_url')
     curl -LJ "${DOWNLOAD_URL}" -o boring.tar.gz
     tar -xzf boring.tar.gz
-    mv boring.tar.gz /usr/local/bin/boring
+    mv boring /usr/local/bin/boring
     chmod +x /usr/local/bin/boring
 EOF
 
