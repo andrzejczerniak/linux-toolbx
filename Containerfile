@@ -1,4 +1,5 @@
-FROM quay.io/fedora/fedora-toolbox:44 
+FROM quay.io/fedora/fedora-toolbox:45
+
 
 # Basic tools needed by sections below
 RUN <<EOF 
@@ -26,9 +27,11 @@ RUN dnf copr enable -y zeno/scrcpy
 
 # A tool for exploring a Docker image, layer contents, and discovering ways to shrink the size of your Docker/OCI image.
 RUN <<EOF
-    DIVE_VERSION=$(curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-    curl -fOL "https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_amd64.rpm"
-    rpm -i dive_${DIVE_VERSION}_linux_amd64.rpm
+    DOWNLOAD_URL=$(curl -fsSL https://api.github.com/repos/wagoodman/dive/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("linux_amd64.tar.gz"))')
+    curl -LJ "${DOWNLOAD_URL}" -o dive.tar.gz
+    tar -xzf dive.tar.gz
+    mv dive /usr/local/bin/dive
+    chmod +x /usr/local/bin/dive
 EOF
 
 # A single binary that handles certs, TLS connections, and all the stuff you normally need three different openssl invocations for. 
@@ -40,27 +43,24 @@ EOF
 
 #Lazyssh is a terminal-based, interactive SSH manager inspired by tools like lazydocker and k9s — but built for managing your fleet of servers directly from your terminal. 
 RUN <<EOF
-    # Detect latest version
-    LATEST_TAG=$(curl -fsSL https://api.github.com/repos/Adembc/lazyssh/releases/latest | jq -r .tag_name)
-    # Download the correct binary for your system
-    curl -LJO "https://github.com/Adembc/lazyssh/releases/download/${LATEST_TAG}/lazyssh_$(uname)_$(uname -m).tar.gz"
-    # Extract the binary
-    tar -xzf lazyssh_$(uname)_$(uname -m).tar.gz
-    # Move to /usr/local/bin or another directory in your PATH
-    mv lazyssh /usr/local/bin/
+    DOWNLOAD_URL=$(curl -fsSL https://api.github.com/repos/Adembc/lazyssh/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("Linux_x86_64.tar.gz"))')
+    curl -LJ ${DOWNLOAD_URL} -o lazyssh.tar.gz
+    tar xzf lazyssh.tar.gz
+    mv lazyssh /usr/local/bin/lazyssh
+    chmod +x /usr/local/bin/lazyssh
 EOF
 
 
 #Tea
 RUN <<EOF
-    DOWNLOAD_URL=$(curl -fsSL "https://gitea.com/api/v1/repos/gitea/tea/releases/latest" | jq -r '.assets[] | select(.name | endswith("linux-amd64")) | .browser_download_url')
+    DOWNLOAD_URL=$(curl -fsSL "https://gitea.com/api/v1/repos/gitea/tea/releases/latest" | jq -r '.assets[].browser_download_url | select(endswith("linux-amd64"))')
     curl -LJ "${DOWNLOAD_URL}" -o /usr/local/bin/tea
     chmod +x /usr/local/bin/tea
 EOF
 
 #Boring
 RUN <<EOF
-    DOWNLOAD_URL=$(curl -fsSL https://api.github.com/repos/alebeck/boring/releases/latest | jq -r '.assets[] | select(.name | endswith("linux-amd64.tar.gz")) | .browser_download_url')
+    DOWNLOAD_URL=$(curl -fsSL https://api.github.com/repos/alebeck/boring/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("linux-amd64.tar.gz"))')
     curl -LJ "${DOWNLOAD_URL}" -o boring.tar.gz
     tar -xzf boring.tar.gz
     mv boring /usr/local/bin/boring
@@ -79,4 +79,5 @@ RUN dnf install -y \
     yt-dlp \
     podlet \
     zsh \
+    fzf \
     && dnf clean all
